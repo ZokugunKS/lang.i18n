@@ -12,7 +12,7 @@ import {
 	'..'
 }
 
-describe('number en-US', func() {
+describe('i18n', func() {
 	beforeEach(func() { // {{{
 		i18n.reset()
     }) // }}}

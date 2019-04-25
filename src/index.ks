@@ -8,7 +8,6 @@
  * http://www.opensource.org/licenses/mit-license.php
  **/
 extern sealed class ReferenceError
-extern console
 
 import '@zokugun/lang/src/object/clone'
 
