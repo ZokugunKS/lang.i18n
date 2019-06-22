@@ -32,7 +32,7 @@ func addCulture(data) { // {{{
 			name: data.name
 		}
 
-		for const name, extension of $extensions {
+		for const extension, name of $extensions {
 			culture[name] = extension.merge(extension.defaults, data[name])
 		}
 
@@ -53,7 +53,7 @@ func addCulture(data) { // {{{
 			name: data.name
 		}
 
-		for const name, extension of $extensions {
+		for const extension, name of $extensions {
 			culture[name] = extension.merge(extension.defaults, region[name], data[name])
 		}
 
@@ -68,7 +68,7 @@ func addExtension(name, defaults, merge) { // {{{
 		merge
 	}
 
-	for const :culture of $cultures {
+	for const culture of $cultures {
 		culture[name] = Object.clone(defaults)
 	}
 } // }}}
