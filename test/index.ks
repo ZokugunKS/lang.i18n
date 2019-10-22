@@ -4,10 +4,11 @@ extern {
 	beforeEach:	func
 	describe:	func
 	it:			func
+	console
 }
 
 import {
-	'@zokugun/lang/src/object/merge'
+	'@zokugun/lang/src/dictionary/merge'
 	'chai'		for expect
 	'..'
 }
@@ -18,57 +19,66 @@ describe('i18n', func() {
     }) // }}}
 
 	it('get', func() { // {{{
-		const value = i18n.culture()
+		const value = i18n.getCulture()
 
 		expect(value).to.be.an('object')
-		expect(value.name).to.equal('en')
+		expect(value.name).to.equal('und')
 	}) // }}}
 
 	it('set', func() { // {{{
-		expect(i18n.culture('fr')).to.equal('en')
+		expect(i18n.getCulture('fr')).to.eql({
+			name: 'und'
+		})
 	}) // }}}
 
-	it('addCulture - en-US,en-GB', func() { // {{{
-		i18n.addCulture({
+	it('addCultureData - en-US,en-GB', func() { // {{{
+		i18n.addCultureData('en-GB', {})
+
+		i18n.addCultureData('en-US', {})
+
+		expect(i18n.getCulture('en-GB')).to.eql({
 			name: 'en-GB'
 		})
 
-		i18n.addCulture({
+		let value = i18n.getCulture()
+
+		expect(value).to.be.an('object')
+		expect(value.name).to.equal('und')
+
+		expect(i18n.getCulture('en-US')).to.eql({
 			name: 'en-US'
 		})
 
-		expect(i18n.culture('en-GB')).to.equal('en-GB')
+		value = i18n.getCulture()
 
-		let value = i18n.culture()
+		expect(value).to.be.an('object')
+		expect(value.name).to.equal('und')
+
+		i18n.setCulture('en-GB')
+
+		value = i18n.getCulture()
 
 		expect(value).to.be.an('object')
 		expect(value.name).to.equal('en-GB')
-
-		expect(i18n.culture('en-US')).to.equal('en-US')
-
-		value = i18n.culture()
-
-		expect(value).to.be.an('object')
-		expect(value.name).to.equal('en-US')
 	}) // }}}
 
-	it('addCulture - fr-FR', func() { // {{{
-		i18n.addCulture({
-			name: 'fr-FR'
-		})
+	it('addCultureData - fr-FR', func() { // {{{
+		i18n.addCultureData('fr-FR', {})
 
-		expect(i18n.culture('fr')).to.equal('fr')
+		expect(i18n.getCulture('fr')).to.eql({
+			name: 'fr'
+		})
 	}) // }}}
 
 	it('getCulture - en-US,en', func() { // {{{
 		expect(i18n.getCulture('en-US', 'en')).to.eql({
-			name: 'en'
+			name: 'und'
 		})
 	}) // }}}
 
 	it('getCulture - fr', func() { // {{{
 		expect(i18n.getCulture('fr')).to.eql({
-			name: 'en'
+			name: 'und'
 		})
 	}) // }}}
 
@@ -92,9 +102,9 @@ describe('i18n', func() {
 			infinitySymbol: '∞'
 			nanSymbol: 'NaN'
 			timeSeparator: ':'
-        }, (...data) => Object.merge(...data))
+        }, (...data) => Dictionary.merge(...data))
 
-		expect(i18n.getExtension('number')).to.eql({
+		expect(i18n.getCulture().number).to.eql({
 			decimalSeparator: '.'
 			groupSeparator: ','
 			listSeparator: ';'
@@ -111,7 +121,7 @@ describe('i18n', func() {
 	}) // }}}
 
 	it('getExtension - date', func() { // {{{
-		expect(() => i18n.getExtension('date')).to.throw()
+		expect(i18n.getCulture().date).to.not.exist
 	}) // }}}
 
 	it('addExtension - addCulture', func() { // {{{
@@ -128,35 +138,28 @@ describe('i18n', func() {
 			infinitySymbol: '∞'
 			nanSymbol: 'NaN'
 			timeSeparator: ':'
-        }, (...data) => Object.merge({}, ...data))
+        }, (...data) => Dictionary.merge({}, ...data))
 
-		i18n.addCulture({
-			name: 'en-GB'
+		i18n.addCultureData('en-GB', {})
+
+		i18n.addCultureData('en-US', {})
+
+		i18n.addCultureData('fr-FR', 'number', {
+			decimalSeparator: ','
+			groupSeparator: ' '
+			listSeparator: ';'
+			percentSymbol: '%'
+			plusSymbol: '+'
+			minusSymbol: '-'
+			exponentialSymbol: 'E'
+			superScriptingExponent: '×'
+			perMilleSymbol: '‰'
+			infinitySymbol: '∞'
+			nanSymbol: 'NaN'
+			timeSeparator: ':'
 		})
 
-		i18n.addCulture({
-			name: 'en-US'
-		})
-
-		i18n.addCulture({
-			name: 'fr-FR'
-			number: {
-				decimalSeparator: ','
-				groupSeparator: ' '
-				listSeparator: ';'
-				percentSymbol: '%'
-				plusSymbol: '+'
-				minusSymbol: '-'
-				exponentialSymbol: 'E'
-				superScriptingExponent: '×'
-				perMilleSymbol: '‰'
-				infinitySymbol: '∞'
-				nanSymbol: 'NaN'
-				timeSeparator: ':'
-			}
-		})
-
-		expect(i18n.getExtension('number', 'en-GB')).to.eql({
+		expect(i18n.getCulture('en-GB').number).to.eql({
 			decimalSeparator: '.'
 			groupSeparator: ','
 			listSeparator: ';'
@@ -171,7 +174,7 @@ describe('i18n', func() {
 			timeSeparator: ':'
 		})
 
-		expect(i18n.getExtension('number', 'fr-FR')).to.eql({
+		expect(i18n.getCulture('fr-FR').number).to.eql({
 			decimalSeparator: ','
 			groupSeparator: ' '
 			listSeparator: ';'

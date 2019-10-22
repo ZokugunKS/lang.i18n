@@ -7,82 +7,88 @@
  * Licensed under the MIT license.
  * http://www.opensource.org/licenses/mit-license.php
  **/
-extern sealed class ReferenceError
-
-import '@zokugun/lang/src/object/clone'
+require|import '@zokugun/lang/src/dictionary/clone'
 
 let $cultures = {
-	'en': {
-		name: 'en'
+	'und': {
+		name: 'und'
 	}
 }
-
 let $extensions = {}
+let $properties = {}
+let $regions = {}
 
-let $regions = {
-	'en': []
-}
+let $current = $cultures['und']
 
-let $current = $cultures['en']
+func addCultureData(name: String, extensionName: String = null, data): Void { // {{{
+	const names = name.split('-')
 
-func addCulture(data) { // {{{
-	const names = data.name.split('-')
-	if names.length == 1 {
-		const culture = {
-			name: data.name
+	const language = names[0]
+	const region = names.length == 1 ? null : names[1]
+
+	let culture = $cultures[name]
+	if !?culture {
+		culture = {
+			name
 		}
 
-		for const extension, name of $extensions {
-			culture[name] = extension.merge(extension.defaults, data[name])
-		}
+		$cultures[name] = culture
 
-		$cultures[data.name] = culture
-		$regions[data.name] = []
+		if region == null {
+			$regions[name] = []
+		}
+		else {
+			if !?$cultures[language] {
+				$cultures[language] = {
+					name: language
+				}
+
+				$regions[language] = []
+			}
+
+			$regions[language].push(name)
+		}
+	}
+
+	if const extension = $extensions[extensionName] {
+		if region == null {
+			culture[extensionName] = extension.merge(extension.defaults, data)
+		}
+		else {
+			culture[extensionName] = extension.merge(extension.defaults, region[extensionName], data)
+		}
 	}
 	else {
-		const language = names[0]
-
-		if !?$cultures[language] {
-			addCulture({
-				name: language
-			})
+		if region == null {
+			for const extension, name of $extensions {
+				culture[name] = extension.merge(extension.defaults, data[name])
+			}
 		}
-
-		const region = $cultures[language]
-		const culture = {
-			name: data.name
+		else {
+			for const extension, name of $extensions {
+				culture[name] = extension.merge(extension.defaults, region[name], data[name])
+			}
 		}
-
-		for const extension, name of $extensions {
-			culture[name] = extension.merge(extension.defaults, region[name], data[name])
-		}
-
-		$cultures[data.name] = culture
-		$regions[language].push(culture.name)
 	}
 } // }}}
 
-func addExtension(name, defaults, merge) { // {{{
+func addExtension(name, defaults, merge): Void { // {{{
 	$extensions[name] = {
 		defaults
 		merge
 	}
 
 	for const culture of $cultures {
-		culture[name] = Object.clone(defaults)
+		culture[name] = Dictionary.clone(defaults)
 	}
 } // }}}
 
-func culture() => $current
-func culture(selector): String { // {{{
-	if next ?= $cultures[selector] {
-		$current = next
+func addProperty(name, defaultValue, setter): Void { // {{{
+	$properties[name] = {
+		defaultValue
+		setter
+		value: defaultValue
 	}
-	else {
-		$current = $cultures['en']
-	}
-
-	return $current.name
 } // }}}
 
 func format(value = '', ...args): String { // {{{
@@ -94,7 +100,8 @@ func format(value = '', ...args): String { // {{{
 	}
 } // }}}
 
-func getCulture(...selectors) { // {{{
+func getCulture(): Dictionary => $current
+func getCulture(...selectors): Dictionary { // {{{
 	let culture
 
 	while selectors.length > 0 {
@@ -106,44 +113,56 @@ func getCulture(...selectors) { // {{{
 	return $current
 } // }}}
 
-#[error(ignore(ReferenceError))]
-func getExtension(name, ...selectors) { // {{{
-	const culture = getCulture(...selectors)
-
-	unless ?culture[name] {
-		throw new ReferenceError(`The culture "\(culture.name)" doesn't have the extension "\(name)".`)
-	}
-
-	return culture[name]
+func getProperty(name): Any { // {{{
+	return $properties[name].value
 } // }}}
 
-func isCulture(value) => value is String && ((value.length == 2 && /[a-z]{2}/.test(value)) || (value.length == 5 && /[a-z]{2}\-[A-Z]{2}/.test(value)))
+func isCulture(value): Boolean => value is String && ((value.length == 2 && /[a-z]{2}/.test(value)) || (value.length == 5 && /[a-z]{2}\-[A-Z]{2}/.test(value)))
 
-func reset() { // {{{
+func reset(): Void { // {{{
 	$cultures = {
-		'en': {
-			name: 'en'
+		'und': {
+			name: 'und'
 		}
 	}
 
 	$extensions = {}
+	$properties = {}
+	$regions = {}
 
-	$regions = {
-		'en': []
+	$current = $cultures['und']
+} // }}}
+
+func setCulture(selector): String { // {{{
+	if next ?= $cultures[selector] {
+		$current = next
+	}
+	else {
+		$current = $cultures['und']
 	}
 
-	$current = $cultures['en']
+	for const property of $properties {
+		property.value = property.setter(property.value, $current)
+	}
+
+	return $current.name
+} // }}}
+
+func setProperty(name, value): Void { // {{{
+	$properties[name].value = $properties[name].setter(value, $current)
 } // }}}
 
  export namespace i18n {
 	 export {
-		 addCulture
+		 addCultureData
 		 addExtension
-		 culture
+		 addProperty
 		 format
 		 getCulture
-		 getExtension
+		 getProperty
 		 isCulture
 		 reset
+		 setCulture
+		 setProperty
 	 }
  }
