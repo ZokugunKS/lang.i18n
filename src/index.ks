@@ -35,7 +35,7 @@ func addCultureData(name: String, extensionName: String = null, data): Void { //
 		$cultures[name] = culture
 
 		if region == null {
-			$regions[name] = []
+			$regions[language] = []
 		}
 		else {
 			if !?$cultures[language] {
@@ -55,7 +55,7 @@ func addCultureData(name: String, extensionName: String = null, data): Void { //
 			culture[extensionName] = extension.merge(extension.defaults, data)
 		}
 		else {
-			culture[extensionName] = extension.merge(extension.defaults, region[extensionName], data)
+			culture[extensionName] = extension.merge(extension.defaults, $cultures[language][extensionName], data)
 		}
 	}
 	else {
@@ -66,7 +66,7 @@ func addCultureData(name: String, extensionName: String = null, data): Void { //
 		}
 		else {
 			for const extension, name of $extensions {
-				culture[name] = extension.merge(extension.defaults, region[name], data[name])
+				culture[name] = extension.merge(extension.defaults, $cultures[language][name], data[name])
 			}
 		}
 	}
